@@ -537,31 +537,6 @@ export function isNodeFromTemplate(node: Node): boolean {
     return root instanceof ShadowRoot;
 }
 
-// export function getCustomElementVM(elm: HTMLElement): VM {
-//     if (process.env.NODE_ENV !== 'production') {
-//         const vm = getHiddenField(elm, ViewModelReflection);
-//         assert.isTrue(vm && 'cmpRoot' in vm, `${vm} is not a vm.`);
-//     }
-//     return getHiddenField(elm, ViewModelReflection) as VM;
-// }
-//
-// export function getComponentVM(component: ComponentInterface): VM {
-//     if (process.env.NODE_ENV !== 'production') {
-//         const vm = getHiddenField(component, ViewModelReflection);
-//         assert.isTrue(vm && 'cmpRoot' in vm, `${vm} is not a vm.`);
-//     }
-//     return getHiddenField(component, ViewModelReflection) as VM;
-// }
-//
-// export function getShadowRootVM(root: ShadowRoot): VM {
-//     // TODO: #1299 - use a weak map instead of an internal field
-//     if (process.env.NODE_ENV !== 'production') {
-//         const vm = getHiddenField(root, ViewModelReflection);
-//         assert.isTrue(vm && 'cmpRoot' in vm, `${vm} is not a vm.`);
-//     }
-//     return getHiddenField(root, ViewModelReflection) as VM;
-// }
-
 function hasDifferentIdentities(a: VNode | null, b: VNode | null): boolean {
     if (a === b) {
         // cached vnodes or null will qualify here
@@ -638,8 +613,8 @@ export function allocateInSlot(vm: VM, children: VNodes) {
             const oldVNode = aChildren[i];
             if (!isNull(oldVNode) && !isUndefined(oldVNode.elm)) {
                 const newVNode = children[i];
-                ArrayPush.call(slottedNewChildren, oldVNode);
-                ArrayPush.call(slottedOldChildren, newVNode);
+                ArrayPush.call(slottedOldChildren, oldVNode);
+                ArrayPush.call(slottedNewChildren, newVNode);
             }
         }
         updateStaticChildren(vm.elm, slottedOldChildren, slottedNewChildren);
