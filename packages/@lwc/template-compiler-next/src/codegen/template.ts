@@ -9,6 +9,7 @@ import {
     ASTIfBlock,
     ASTComponent,
     ASTEventListener,
+    ASTForBlock,
 } from '../types';
 
 import { Block } from './block';
@@ -95,7 +96,6 @@ function generateElement(
         generateChildNode(renderer, block, identifier, child);
     }
 }
-
 function generateComponent(
     renderer: Renderer,
     block: Block,
@@ -103,7 +103,6 @@ function generateComponent(
     component: ASTComponent
 ): void {
     const ctorIdentifier = renderer.addImport(component.name, 'default');
-
     const identifier = block.addElement(
         component.name,
         parent,
@@ -158,6 +157,15 @@ function generateIfBlock(
     `);
 }
 
+function generateForBlock(
+    _renderer: Renderer,
+    _block: Block,
+    _parent: string,
+    _forBlockNode: ASTForBlock
+): void {
+    // XTODO
+}
+
 function generateChildNode(
     renderer: Renderer,
     block: Block,
@@ -185,8 +193,12 @@ function generateChildNode(
             generateIfBlock(renderer, block, parent, childNode);
             break;
 
+        case 'for-block':
+            generateForBlock(renderer, block, parent, childNode);
+            break;
+
         default:
-            throw new Error(`Unexpected child node "${childNode.type}"`);
+            throw new Error(`Unexpected child node "${(childNode as any).type}"`);
     }
 }
 
