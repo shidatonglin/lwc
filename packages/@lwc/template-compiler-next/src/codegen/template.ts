@@ -8,6 +8,7 @@ import {
     ASTAttribute,
     ASTIfBlock,
     ASTComponent,
+    ASTEventListener,
 } from '../types';
 
 import { Block } from './block';
@@ -42,12 +43,7 @@ function generateTextNode(renderer: Renderer, block: Block, parent: string, text
     }
 }
 
-function generateAttribute(
-    renderer: Renderer,
-    block: Block,
-    parent: string,
-    attribute: ASTAttribute
-): void {
+function generateAttribute(block: Block, parent: string, attribute: ASTAttribute): void {
     if (typeof attribute.value === 'string') {
         block.createStatements.push(
             `@setAttribute(${parent}, "${attribute.name}", ${JSON.stringify(attribute.value)});`
@@ -68,6 +64,11 @@ function generateAttribute(
     }
 }
 
+function generateListener(block: Block, parent: string, listener: ASTEventListener): void {
+    const handlerLookup = `context.${generateExpression(listener.handler)}`;
+    block.createStatements.push(`@addListener(${parent}, "${listener.name}", ${handlerLookup});`);
+}
+
 function generateElement(
     renderer: Renderer,
     block: Block,
@@ -83,7 +84,11 @@ function generateElement(
     );
 
     for (const attribute of element.attributes) {
-        generateAttribute(renderer, block, identifier, attribute);
+        generateAttribute(block, identifier, attribute);
+    }
+
+    for (const listener of element.listeners) {
+        generateListener(block, identifier, listener);
     }
 
     for (const child of element.children) {
@@ -99,11 +104,15 @@ function generateComponent(
 ): void {
     const ctorIdentifier = renderer.addImport(component.name, 'default');
 
-    block.addElement(
+    const identifier = block.addElement(
         component.name,
         parent,
         `@createComponent("${component.name}", ${ctorIdentifier})`
     );
+
+    for (const listener of component.listeners) {
+        generateListener(block, identifier, listener);
+    }
 }
 
 function generateIfBlock(
