@@ -13,7 +13,7 @@ export default function template(context) {
                 if_block0.create();
             }
         },
-        insert(target) {
+        insert(target, anchor) {
             if (if_block) {
                 if_block.insert(target);
             }
@@ -52,7 +52,7 @@ function ifBlock(context) {
             div = createElement("div");
             text = createText("I am true");
         },
-        insert(target) {
+        insert(target, anchor) {
             insert(div, target);
             insert(text, div);
         },
@@ -70,7 +70,7 @@ function ifBlock0(context) {
             div = createElement("div");
             text = createText("I am false");
         },
-        insert(target) {
+        insert(target, anchor) {
             insert(div, target);
             insert(text, div);
         },

@@ -7,6 +7,7 @@ import {
     ASTExpression,
     ASTAttribute,
     ASTIfBlock,
+    ASTComponent,
 } from '../types';
 
 import { Block } from './block';
@@ -90,6 +91,21 @@ function generateElement(
     }
 }
 
+function generateComponent(
+    renderer: Renderer,
+    block: Block,
+    parent: string,
+    component: ASTComponent
+): void {
+    const ctorIdentifier = renderer.addImport(component.name, 'default');
+
+    block.addElement(
+        component.name,
+        parent,
+        `@createComponent("${component.name}", ${ctorIdentifier})`
+    );
+}
+
 function generateIfBlock(
     renderer: Renderer,
     block: Block,
@@ -152,12 +168,16 @@ function generateChildNode(
             generateElement(renderer, block, parent, childNode);
             break;
 
+        case 'component':
+            generateComponent(renderer, block, parent, childNode);
+            break;
+
         case 'if-block':
             generateIfBlock(renderer, block, parent, childNode);
             break;
 
         default:
-            throw new Error('Unexpected child node');
+            throw new Error(`Unexpected child node "${childNode.type}"`);
     }
 }
 

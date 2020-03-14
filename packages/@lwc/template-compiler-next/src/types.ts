@@ -35,6 +35,12 @@ export interface ASTElement {
     children: ASTChildNode[];
 }
 
+export interface ASTComponent {
+    type: 'component';
+    name: string;
+    slottedContent: Map<string, ASTChildNode[]>;
+}
+
 export interface ASTIfBlock {
     type: 'if-block';
     modifier: 'true' | 'false';
@@ -50,7 +56,13 @@ export interface ASTForBlock {
     children: ASTChildNode[];
 }
 
-export type ASTChildNode = ASTText | ASTComment | ASTElement | ASTIfBlock | ASTForBlock;
+export type ASTChildNode =
+    | ASTText
+    | ASTComment
+    | ASTElement
+    | ASTComponent
+    | ASTIfBlock
+    | ASTForBlock;
 
 export interface ASTRoot {
     type: 'root';

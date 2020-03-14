@@ -9,7 +9,7 @@ export default function template(context) {
             span = createElement("span");
             text = createText("test");
         },
-        insert(target) {
+        insert(target, anchor) {
             insert(span, target);
             insert(text, span);
         },

@@ -11,7 +11,7 @@ export default function template(context) {
             setAttribute(circle, "cx", "50");
             setAttribute(circle, "cy", "50");
         },
-        insert(target) {
+        insert(target, anchor) {
             insert(svg, target);
             insert(circle, svg);
         },

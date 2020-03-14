@@ -1,0 +1,10 @@
+{
+    "type": "root",
+    "children": [
+        {
+            "type": "component",
+            "name": "foo-bar",
+            "slottedContent": {}
+        }
+    ]
+}

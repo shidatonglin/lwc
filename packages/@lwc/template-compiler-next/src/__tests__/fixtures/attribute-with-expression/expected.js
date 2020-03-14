@@ -11,7 +11,7 @@ export default function template(context) {
             setAttribute(div, "class", class_value);
             setAttribute(div, "style", style_value);
         },
-        insert(target) {
+        insert(target, anchor) {
             insert(div, target);
         },
         update() {

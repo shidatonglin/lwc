@@ -14,7 +14,7 @@ export default function template(context) {
             text0 = createText(text_value);
             text1 = createText("!");
         },
-        insert(target) {
+        insert(target, anchor) {
             insert(span, target);
             insert(text, span);
             insert(text0, span);

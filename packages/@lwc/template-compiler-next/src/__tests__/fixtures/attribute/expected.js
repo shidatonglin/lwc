@@ -9,7 +9,7 @@ export default function template(context) {
             setAttribute(div, "class", "foo bar");
             setAttribute(div, "style", "color: red;");
         },
-        insert(target) {
+        insert(target, anchor) {
             insert(div, target);
         },
         update() {

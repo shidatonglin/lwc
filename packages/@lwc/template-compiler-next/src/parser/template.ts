@@ -8,6 +8,7 @@ import {
     ASTChildNode,
     ASTIdentifier,
     CompilerConfig,
+    ASTComponent,
 } from '../types';
 
 import * as parse5Utils from '../utils/parse5';
@@ -129,17 +130,48 @@ function parseAttributes(attribute: parse5.Attribute): ASTAttribute {
     };
 }
 
+function parseComponent(node: parse5.Element, config: CompilerConfig): ASTComponent {
+    const slottedContent = new Map<string, ASTChildNode[]>();
+
+    for (const child of node.childNodes) {
+        let slotName = 'default';
+
+        if (parse5Utils.isElement(child)) {
+            slotName = child.attrs.find(attr => attr.name === 'slot')?.value || slotName;
+        }
+
+        let slotChildren = slottedContent.get(slotName);
+        if (!slotChildren) {
+            slotChildren = [];
+            slottedContent.set(slotName, slotChildren);
+        }
+
+        slotChildren.push(...parseChildNode(child, config));
+    }
+
+    return {
+        type: 'component',
+        name: node.tagName,
+        slottedContent,
+    };
+}
+
 function parseElement(node: parse5.Element, config: CompilerConfig): ASTChildNode {
     const forAttribute = consumeForAttribute(node);
     const ifAttribute = consumeIfAttribute(node);
 
-    let element: ASTChildNode = {
-        type: 'element',
-        name: node.tagName,
-        namespace: HTML_NAMESPACE !== node.namespaceURI ? node.namespaceURI : undefined,
-        attributes: node.attrs.map(parseAttributes),
-        children: node.childNodes.flatMap(child => parseChildNode(child, config)),
-    };
+    let element: ASTChildNode;
+    if (node.tagName.includes('-')) {
+        element = parseComponent(node, config);
+    } else {
+        element = {
+            type: 'element',
+            name: node.tagName,
+            namespace: HTML_NAMESPACE !== node.namespaceURI ? node.namespaceURI : undefined,
+            attributes: node.attrs.map(parseAttributes),
+            children: node.childNodes.flatMap(child => parseChildNode(child, config)),
+        };
+    }
 
     if (ifAttribute) {
         element = {

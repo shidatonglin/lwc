@@ -1,4 +1,5 @@
 import { code } from '../utils/code';
+import { toIdentifier } from '../utils/identifiers';
 
 export class Block {
     name: string;
@@ -16,6 +17,8 @@ export class Block {
     }
 
     registerIdentifier(name: string, init?: string): string {
+        name = toIdentifier(name);
+
         const original = name;
         let suffix = 0;
 

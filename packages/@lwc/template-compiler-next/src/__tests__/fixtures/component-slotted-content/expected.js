@@ -1,14 +1,16 @@
 import { renderer } from 'lwc';
-const { createText } = renderer;
+const { createComponent } = renderer;
+
+import foo_bar__default from 'foo-bar';
 
 export default function template(context) {
-    let text;
+    let foo_bar;
     return {
         create() {
-            text = createText("Hello world!\n");
+            foo_bar = createComponent("foo-bar", foo_bar__default);
         },
         insert(target, anchor) {
-            insert(text, target);
+            insert(foo_bar, target);
         },
         update() {
             
