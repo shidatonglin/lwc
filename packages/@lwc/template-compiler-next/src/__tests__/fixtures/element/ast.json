@@ -5,6 +5,7 @@
             "type": "element",
             "name": "span",
             "attributes": [],
+            "listeners": [],
             "children": [
                 {
                     "type": "text",

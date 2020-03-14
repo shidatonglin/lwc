@@ -27,18 +27,26 @@ export interface ASTAttribute {
     value: string | ASTExpression;
 }
 
+export interface ASTEventListener {
+    type: 'listener';
+    name: string;
+    handler: ASTExpression;
+}
+
 export interface ASTElement {
     type: 'element';
     name: string;
     namespace?: string;
     attributes: ASTAttribute[];
+    listeners: ASTEventListener[];
     children: ASTChildNode[];
 }
 
 export interface ASTComponent {
     type: 'component';
     name: string;
-    slottedContent: Map<string, ASTChildNode[]>;
+    listeners: ASTEventListener[];
+    slottedContent: Record<string, ASTChildNode[]>;
 }
 
 export interface ASTIfBlock {

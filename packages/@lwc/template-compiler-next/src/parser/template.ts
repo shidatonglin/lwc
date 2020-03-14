@@ -9,6 +9,7 @@ import {
     ASTIdentifier,
     CompilerConfig,
     ASTComponent,
+    ASTEventListener,
 } from '../types';
 
 import * as parse5Utils from '../utils/parse5';
@@ -94,19 +95,19 @@ function consumeForAttribute({
     item?: ASTIdentifier;
     index?: ASTIdentifier;
 } | null {
-    const forEachAttribute = attrs.find(attr => attr.name.startsWith('for:each'));
+    const forEachAttribute = attrs.find(attr => attr.name === 'for:each');
     if (!forEachAttribute) {
         return null;
     }
 
     attrs.splice(attrs.indexOf(forEachAttribute), 1);
 
-    const forItemAttribute = attrs.find(attr => attr.name.startsWith('for:item'));
+    const forItemAttribute = attrs.find(attr => attr.name === 'for:item');
     if (forItemAttribute) {
         attrs.splice(attrs.indexOf(forItemAttribute), 1);
     }
 
-    const forIndexAttribute = attrs.find(attr => attr.name.startsWith('for:item'));
+    const forIndexAttribute = attrs.find(attr => attr.name === 'for:index');
     if (forIndexAttribute) {
         attrs.splice(attrs.indexOf(forIndexAttribute), 1);
     }
@@ -116,6 +117,29 @@ function consumeForAttribute({
         item: forItemAttribute ? parseIdentifer(forItemAttribute.value) : undefined,
         index: forIndexAttribute ? parseIdentifer(forIndexAttribute.value) : undefined,
     };
+}
+
+function consumeEventListeners({ attrs }: parse5.Element): ASTEventListener[] {
+    const listeners: ASTEventListener[] = [];
+
+    for (const attribute of attrs) {
+        const listenerMatch = attribute.name.match(/^on(.+)$/);
+        if (!listenerMatch) {
+            continue;
+        }
+
+        const [, name] = listenerMatch;
+        const handler = parseExpression(attribute.value);
+
+        attrs.splice(attrs.indexOf(attribute), 1);
+        listeners.push({
+            type: 'listener',
+            name,
+            handler,
+        });
+    }
+
+    return listeners;
 }
 
 function parseAttributes(attribute: parse5.Attribute): ASTAttribute {
@@ -131,8 +155,9 @@ function parseAttributes(attribute: parse5.Attribute): ASTAttribute {
 }
 
 function parseComponent(node: parse5.Element, config: CompilerConfig): ASTComponent {
-    const slottedContent = new Map<string, ASTChildNode[]>();
+    const listeners = consumeEventListeners(node);
 
+    const slottedContent: Record<string, ASTChildNode[]> = {};
     for (const child of node.childNodes) {
         let slotName = 'default';
 
@@ -140,10 +165,10 @@ function parseComponent(node: parse5.Element, config: CompilerConfig): ASTCompon
             slotName = child.attrs.find(attr => attr.name === 'slot')?.value || slotName;
         }
 
-        let slotChildren = slottedContent.get(slotName);
+        let slotChildren = slottedContent[slotName];
         if (!slotChildren) {
             slotChildren = [];
-            slottedContent.set(slotName, slotChildren);
+            slottedContent[slotName] = slotChildren;
         }
 
         slotChildren.push(...parseChildNode(child, config));
@@ -152,47 +177,62 @@ function parseComponent(node: parse5.Element, config: CompilerConfig): ASTCompon
     return {
         type: 'component',
         name: node.tagName,
+        listeners,
         slottedContent,
     };
 }
 
-function parseElement(node: parse5.Element, config: CompilerConfig): ASTChildNode {
+function parseElement(node: parse5.Element, config: CompilerConfig): ASTChildNode[] {
     const forAttribute = consumeForAttribute(node);
     const ifAttribute = consumeIfAttribute(node);
 
-    let element: ASTChildNode;
+    let elements: ASTChildNode[] = [];
+
     if (node.tagName.includes('-')) {
-        element = parseComponent(node, config);
+        elements = [parseComponent(node, config)];
+    } else if (parse5Utils.isTemplate(node)) {
+        elements = node.content.childNodes.flatMap(child => parseChildNode(child, config));
     } else {
-        element = {
-            type: 'element',
-            name: node.tagName,
-            namespace: HTML_NAMESPACE !== node.namespaceURI ? node.namespaceURI : undefined,
-            attributes: node.attrs.map(parseAttributes),
-            children: node.childNodes.flatMap(child => parseChildNode(child, config)),
-        };
+        const listeners = consumeEventListeners(node);
+        const attributes = node.attrs.map(parseAttributes);
+        const children = node.childNodes.flatMap(child => parseChildNode(child, config));
+
+        elements = [
+            {
+                type: 'element',
+                name: node.tagName,
+                namespace: HTML_NAMESPACE !== node.namespaceURI ? node.namespaceURI : undefined,
+                attributes,
+                listeners,
+                children,
+            },
+        ];
     }
 
     if (ifAttribute) {
-        element = {
-            type: 'if-block',
-            modifier: ifAttribute.modifier,
-            condition: ifAttribute.condition,
-            children: [element],
-        };
+        elements = [
+            {
+                type: 'if-block',
+                modifier: ifAttribute.modifier,
+                condition: ifAttribute.condition,
+                children: elements,
+            },
+        ];
     }
 
     if (forAttribute) {
-        element = {
-            type: 'for-block',
-            expression: forAttribute.expression,
-            item: forAttribute.item,
-            index: forAttribute.index,
-            children: [element],
-        };
+        elements = [
+            {
+                type: 'for-block',
+                expression: forAttribute.expression,
+                item: forAttribute.item,
+                index: forAttribute.index,
+                children: elements,
+            },
+        ];
     }
 
-    return element;
+    return elements;
 }
 
 function parseChildNode(node: parse5.Node, config: CompilerConfig): ASTChildNode[] {
@@ -201,7 +241,7 @@ function parseChildNode(node: parse5.Node, config: CompilerConfig): ASTChildNode
     } else if (parse5Utils.isCommentNode(node)) {
         return [parseComment(node)];
     } else if (parse5Utils.isElement(node)) {
-        return [parseElement(node, config)];
+        return parseElement(node, config);
     }
 
     throw new Error(`Unexpected node "${node}"`);
